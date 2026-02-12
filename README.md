@@ -4,5 +4,4 @@ Implementing diverse deep learning models from the ground up, leveraging PyTorch
 
 - [Tutorial](tutorial/tutorial.ipynb)
 
-- [MLP](models/mlp/mlp.md)
-
+- [ResNet](models/resnet/resent.md)
