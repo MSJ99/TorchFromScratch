@@ -1,6 +1,8 @@
-ㅎ2
+# Torch From Scratch
 
--[Tutorial](tutorial/tutorial.html)
+Implementing diverse deep learning models from the ground up, leveraging PyTorch core modules (`torch`, `torch.nn`, `torch.nn.functional`) for educational purposes.
 
--[MLP](models/mlp/mlp.md)
+- [Tutorial](tutorial/tutorial.ipynb)
+
+- [MLP](models/mlp/mlp.md)
 
