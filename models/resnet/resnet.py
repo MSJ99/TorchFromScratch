@@ -4,7 +4,7 @@ import torch.nn as nn
 
 class Block(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size=3, stride=1, padding=1, bias=False):
-        super(Block, self).__init__()
+        super().__init__()
         self.layer1 = nn.Sequential(
             nn.Conv2d(
                 in_channels=in_channels,
@@ -47,17 +47,19 @@ class Block(nn.Module):
 
         self.relu = nn.ReLU()
 
+
     def forward(self, x):
-        L1 = self.layer1(x)
-        L2 = self.layer2(L1)
-        output = self.relu(L2 + self.shortcut(x))
+        residual = x
+        x = self.layer1(x)
+        x = self.layer2(x)
+        output = self.relu(x + self.shortcut(residual))
 
         return output
 
 
 class ResNet34(nn.Module):
     def __init__(self):
-        super(ResNet34, self).__init__()
+        super().__init__()
         self.conv1 = nn.Conv2d(3, 64, 7, 2)
         self.bn1 = nn.BatchNorm2d(64)
         self.relu1 = nn.ReLU()
@@ -86,13 +88,31 @@ class ResNet34(nn.Module):
         self.pool2 = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(512, 1000)
 
+
     def forward(self, x):
-        C1 = self.pool1(self.conv1(x))
-        C2 = self.conv2_3(self.conv2_2(self.conv2_1(C1)))
-        C3 = self.conv3_4(self.conv3_3(self.conv3_2(self.conv3_1(C2))))
-        C4 = self.conv4_6(self.conv4_5(self.conv4_4(self.conv4_3(self.conv4_2(self.conv4_1(C3))))))
-        C5 = self.conv5_3(self.conv5_2(self.conv5_1(C4)))
-        output = self.fc(torch.flatten(self.pool2(C5), 1))
+        x = self.pool1(self.conv1(x))
+
+        x = self.conv2_1(x)
+        x = self.conv2_2(x)
+        x = self.conv2_3(x)
+
+        x = self.conv3_1(x)
+        x = self.conv3_2(x)
+        x = self.conv3_3(x)
+        x = self.conv3_4(x)
+
+        x = self.conv4_1(x)
+        x = self.conv4_2(x)
+        x = self.conv4_3(x)
+        x = self.conv4_4(x)
+        x = self.conv4_5(x)
+        x = self.conv4_6(x)
+
+        x = self.conv5_1(x)
+        x = self.conv5_2(x)
+        x = self.conv5_3(x)
+        
+        output = self.fc(torch.flatten(self.pool2(x), 1))
 
         return output
 
@@ -100,8 +120,9 @@ class ResNet34(nn.Module):
 if __name__ == "__main__":
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    input_data = torch.randn(1, 3, 256, 256)
-    model = ResNet34()
+    model = ResNet34().to(device)
+    input_data = torch.randn(1, 3, 256, 256).to(device)
+
 
     output = model(input_data)
 

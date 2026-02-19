@@ -4,7 +4,7 @@ import torch.nn as nn
 
 class Block(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size=3, stride=1, padding=1, bias=True):
-        super(Block, self).__init__()
+        super().__init__()
         self.conv_bn_relu = nn.Sequential(
             nn.Conv2d(
                 in_channels=in_channels, 
@@ -18,13 +18,16 @@ class Block(nn.Module):
             nn.ReLU(),
         )
     
+
     def forward(self, x):
-        return self.conv_bn_relu(x)
+        x = self.conv_bn_relu(x)
+
+        return x
 
 
 class UNet(nn.Module):
     def __init__(self):
-        super(UNet, self).__init__()
+        super().__init__()
         
         self.enc1_1 = Block(1, 64)
         self.enc1_2 = Block(64, 64)
@@ -63,56 +66,62 @@ class UNet(nn.Module):
 
         self.fc = nn.Conv2d(64, 2, 1)
 
+
     def forward(self, x):
-        enc1_1 = self.enc1_1(x)
-        enc1_2 = self.enc1_2(enc1_1)
-        pool1 = self.pool1(enc1_2)
+        x = self.enc1_1(x)
+        x = self.enc1_2(x)
+        enc1_2 = x
+        x = self.pool1(x)
 
-        enc2_1 = self.enc2_1(pool1)
-        enc2_2 = self.enc2_2(enc2_1)
-        pool2 = self.pool2(enc2_2)
+        x = self.enc2_1(x)
+        x = self.enc2_2(x)
+        enc2_2 = x
+        x = self.pool2(x)
 
-        enc3_1 = self.enc3_1(pool2)
-        enc3_2 = self.enc3_2(enc3_1)
-        pool3 = self.pool3(enc3_2)
+        x = self.enc3_1(x)
+        x = self.enc3_2(x)
+        enc3_2 = x
+        x = self.pool3(x)
 
-        enc4_1 = self.enc4_1(pool3)
-        enc4_2 = self.enc4_2(enc4_1)
-        pool4 = self.pool4(enc4_2)
+        x = self.enc4_1(x)
+        x = self.enc4_2(x)
+        enc4_2 = x
+        x = self.pool4(x)
 
-        enc5_1 = self.enc5_1(pool4)
+        x = self.enc5_1(x)
         
-        dec5_1 = self.dec5_1(enc5_1)
+        x = self.dec5_1(x)
 
-        unpool4 = self.unpool4(dec5_1)
-        cat4 = torch.cat((unpool4, enc4_2), dim=1)
-        dec4_2 = self.dec4_2(cat4)
-        dec4_1 = self.dec4_1(dec4_2)
+        x = self.unpool4(x)
+        x = torch.cat((x, enc4_2), dim=1)
+        x = self.dec4_2(x)
+        x = self.dec4_1(x)
 
-        unpool3 = self.unpool3(dec4_1)
-        cat3 = torch.cat((unpool3, enc3_2), dim=1)
-        dec3_2 = self.dec3_2(cat3)
-        dec3_1 = self.dec3_1(dec3_2)
+        x = self.unpool3(x)
+        x = torch.cat((x, enc3_2), dim=1)
+        x = self.dec3_2(x)
+        x = self.dec3_1(x)
 
-        unpool2 = self.unpool2(dec3_1)
-        cat2 = torch.cat((unpool2, enc2_2), dim=1)
-        dec2_2 = self.dec2_2(cat2)
-        dec2_1 = self.dec2_1(dec2_2)
+        x = self.unpool2(x)
+        x = torch.cat((x, enc2_2), dim=1)
+        x = self.dec2_2(x)
+        x = self.dec2_1(x)
 
-        unpool1 = self.unpool1(dec2_1)
-        cat1 = torch.cat((unpool1, enc1_2), dim=1)
-        dec1_2 = self.dec1_2(cat1)
-        dec1_1 = self.dec1_1(dec1_2)
+        x = self.unpool1(x)
+        x = torch.cat((x, enc1_2), dim=1)
+        x = self.dec1_2(x)
+        x = self.dec1_1(x)
 
-        x = self.fc(dec1_1)
+        x = self.fc(x)
 
         return x
-    
+
+
 if __name__ == "__main__":
     device = "cuda" if torch.cuda.is_available() else "cpu"
-
-    input_data = torch.randn(1, 1, 256, 256)
-    model = UNet()
+    
+    model = UNet().to(device)
+    input_data = torch.randn(1, 1, 256, 256).to(device)
 
     output = model(input_data)
 
