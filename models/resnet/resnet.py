@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-
+# TODO: Add Bottleneck
 class Block(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size=3, stride=1, padding=1, bias=False):
         super().__init__()
@@ -28,7 +28,6 @@ class Block(nn.Module):
                 bias=bias,
             ),
             nn.BatchNorm2d(num_features=out_channels),
-            nn.ReLU(),
         )
 
         if in_channels == out_channels:
@@ -60,7 +59,7 @@ class Block(nn.Module):
 class ResNet34(nn.Module):
     def __init__(self):
         super().__init__()
-        self.conv1 = nn.Conv2d(3, 64, 7, 2)
+        self.conv1 = nn.Conv2d(in_channels=3, out_channels=64, kernel_size=7, stride=2, padding=3, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
         self.relu1 = nn.ReLU()
         self.pool1 = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
