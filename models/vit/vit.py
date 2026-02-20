@@ -27,7 +27,7 @@ class MultiLayerPerceptron(nn.Module):
 
         return x
 
-# TODO: y ?
+
 class EncoderLayer(nn.Module):
     def __init__(self):
         super().__init__()
@@ -56,11 +56,13 @@ class Encoder(nn.Module):
         self.layers = nn.ModuleList([
             EncoderLayer() for _ in range()
         ])
+        self.norm = nn.LayerNorm()
 
 
     def forward(self, x):
         for layer in self.layers:
             x = layer()
+        x = self.norm(x)
 
         return x
 
