@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-# TODO: Add Bottleneck
+
 class Block(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size=3, stride=1, padding=1, bias=False):
         super().__init__()
@@ -56,23 +56,74 @@ class Block(nn.Module):
         return output
 
 
+class Bottleneck(nn.Module):
+    def __init__(self, in_channels, out_channels, stride=1, padding=1, bias=False):
+        super().__init__()
+        self.layer1 = nn.Sequential(
+            nn.Conv2d(in_channels=in_channels, out_channels=in_channels, kernel_size=1, stride=stride, padding=padding, bias=bias),
+            nn.BatchNorm2d(in_channels),
+            nn.ReLU(),
+        )
+
+        self.layer2 = nn.Sequential(
+            nn.Conv2d(in_channels=in_channels, out_channels=in_channels, kernel_size=3, stride=stride, padding=padding, bias=bias),
+            nn.BatchNorm2d(in_channels),
+            nn.ReLU(),
+        )
+
+        self.layer3 = nn.Sequential(
+            nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=1, stride=stride, padding=padding, bias=bias),
+            nn.BatchNorm2d(in_channels),
+        )
+
+        if in_channels == out_channels:
+            self.shortcut = nn.Sequential()
+        else:
+            self.shortcut = nn.Sequential(
+                nn.Conv2d(
+                    in_channels=in_channels,
+                    out_channels=out_channels,
+                    kernel_size=1,
+                    stride=stride,
+                    bias=bias,
+                ),
+                nn.BatchNorm2d(num_features=out_channels)
+            )
+
+        self.relu = nn.ReLU()
+
+    def forward(self, x):
+        residual = x
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.relu(x) + self.shortcut(residual)
+
+        return x
+
+
 class ResNet34(nn.Module):
     def __init__(self):
         super().__init__()
+
+        # x: (B, C, 224, 224) -> (B, C, 56, 56)
         self.conv1 = nn.Conv2d(in_channels=3, out_channels=64, kernel_size=7, stride=2, padding=3, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
         self.relu1 = nn.ReLU()
         self.pool1 = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
 
+        # x: (B, C, 56, 56)
         self.conv2_1 = Block(64, 64)
         self.conv2_2 = Block(64, 64)
         self.conv2_3 = Block(64, 64)
         
+        # x: (B, C, 56, 56) -> (B, C, 28, 28)
         self.conv3_1 = Block(64, 128, stride=2)
         self.conv3_2 = Block(128, 128)
         self.conv3_3 = Block(128, 128)
         self.conv3_4 = Block(128, 128)
         
+        # x: (B, C, 28, 28) -> (B, C, 14, 14)
         self.conv4_1 = Block(128, 256, stride=2)
         self.conv4_2 = Block(256, 256)
         self.conv4_3 = Block(256, 256)
@@ -80,10 +131,12 @@ class ResNet34(nn.Module):
         self.conv4_5 = Block(256, 256)
         self.conv4_6 = Block(256, 256)
 
+        # x: (B, C, 14, 14) -> (B, C, 7, 7)
         self.conv5_1 = Block(256, 512, stride=2)
         self.conv5_2 = Block(512, 512)
         self.conv5_3 = Block(512, 512)
 
+        # x: (B, C, 7, 7) -> (B, C, 1, 1)
         self.pool2 = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(512, 1000)
 
